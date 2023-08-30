@@ -7,21 +7,22 @@ color1 = "orange"
 color2 = "purple"
 
 wn = trtl.Screen()
-height = 50  # the radius of the shape
+height = trtl.window_height() / 2  # the maximum redius is half of the height
+print(height)
 
 painter = trtl.Turtle()
 painter.speed(0)
 painter.color(color1)
 
 space = 1
-angle = 65  # experiment with the shape
+angle = 100  # different angle
 seg = int(360 / angle)
 
 while painter.ycor() < height:
-    if space % 2 == 0:
+    if space % 10 == 0:
         painter.fillcolor(color1)
         painter.color(color1)
-    elif space % 2 == 1:
+    elif space % 10 == 5:
         painter.fillcolor(color2)
         painter.color(color2)
 

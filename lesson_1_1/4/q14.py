@@ -6,7 +6,7 @@ color2 = "purple"
 
 wn = trtl.Screen()
 width = 400
-height = 300
+height = 500
 
 painter = trtl.Turtle()
 painter.speed(0)
@@ -22,10 +22,10 @@ while answer == "y":
     seg = int(360 / angle)
 
     while painter.ycor() < height:
-        if painter.pencolor() == color2:
+        if space % 200 == 0:
             painter.fillcolor(color1)
             painter.color(color1)
-        else:
+        elif space % 200 == 100:
             painter.fillcolor(color2)
             painter.color(color2)
         painter.right(angle)
