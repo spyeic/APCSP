@@ -2,7 +2,7 @@ import turtle as trtl
 import math
 
 is_show_orbit = input("Show orbit? (y/n): ")
-circle_count = int(input("How many circles? (1-10): "))
+circle_count = float(input("How many circles? (1-10/inf): "))
 
 # init screen
 wn = trtl.Screen()
@@ -40,7 +40,7 @@ earth_orbit_redius = 300
 moon_orbit_redius = 80
 
 # run animation
-for i in range(circle_count):
+while circle_count > 0:
     # use for loop to draw 360 degree
     for deg in range(360):
         # every 1 degree, move earth and moon
@@ -53,5 +53,6 @@ for i in range(circle_count):
             earth.xcor() + moon_orbit_redius * math.cos(math.radians(day * 12)),
             earth.ycor() + moon_orbit_redius * math.sin(math.radians(day * 12)),
         )
+    circle_count -= 1
 
 wn.mainloop()
