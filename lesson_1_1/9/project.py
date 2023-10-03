@@ -4,6 +4,7 @@ import random
 
 is_show_orbit = input("Show orbit? (y/n): ")
 circle_count = float(input("How many circles? (1-10/inf): "))
+star_count = int(input("How many stars? (0-5): "))
 
 # init screen
 wn = trtl.Screen()
@@ -23,10 +24,10 @@ def new_element(name):
 
 # init elements
 stars = []
-for i in range(5):
+for i in range(star_count):
     star = new_element("star")
     star.penup()
-    star.pencolor("white")
+    star.pencolor("gray")
     star.speed(0)
     if i % 2 == 0:
         star.goto(500, random.randint(-450, 450))
