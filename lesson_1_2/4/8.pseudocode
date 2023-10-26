@@ -1,0 +1,18 @@
+forward_step = 40
+path_width = 10
+
+for i in range(walls):
+    forward(10)
+    penup()
+    forward(path_width)
+    pendown()
+    forward(10)
+    x, y = position()
+    left(90)
+    forward(path_width)
+    penup()
+    goto(x, y)
+    pendown()
+    forward(forward_step - 20)
+    left(90)
+    forward_step = forward_step + path_width
