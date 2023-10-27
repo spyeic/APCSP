@@ -10,7 +10,7 @@ pen.setheading(90)
 pen.speed(0)
 
 
-def draw_wall(forward):
+def draw_barrier(forward):
     pen.forward(forward)
     # make a wall
     x, y = pen.pos()
@@ -42,13 +42,13 @@ for i in range(walls):
 
     if door_start > forward_length / 2:
         wall_start = rand.randint(path_width, door_start)
-        draw_wall(wall_start)
+        draw_barrier(wall_start)
         draw_door(door_start - wall_start)
         pen.forward(forward_length - door_start)
     else:
         wall_start = rand.randint(door_start, forward_length - path_width)
         draw_door(door_start)
-        draw_wall(wall_start - door_start)
+        draw_barrier(wall_start - door_start)
         pen.forward(forward_length - wall_start)
 
     pen.left(90)
@@ -61,6 +61,7 @@ maze_runner.goto(init_pos)
 maze_runner.pendown()
 maze_runner.showturtle()
 amount = 10
+
 
 def on_up():
     maze_runner.setheading(90)
