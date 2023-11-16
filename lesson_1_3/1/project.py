@@ -6,7 +6,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("main")
 
-# init turtle
+# init turtles
 pen = trtl.Turtle(visible=False)
 pen.speed(0)
 pen.penup()
@@ -57,10 +57,12 @@ for i in range(lines - 4):
         solution_amount += 1
 
 
+# a function that creates a font, default size is 20
 def get_font(size=20):
     return ("Arial", size, "normal")
 
 
+# a decorator that turns off the tracer, use it before the function
 def tracer_off(fn):
     def wrapped(*args, **kwargs):
         wn.tracer(False)
@@ -71,20 +73,24 @@ def tracer_off(fn):
     return wrapped
 
 
+# a function that changes the color of the player, and restarts the game
 def change_color_mode():
     global is_player_black
     is_player_black = not is_player_black
     init_game_with_clear()
 
 
+# a function that init the game without clearing the screen
 def init_game_with_clear():
     wn.clear()
     init_game()
 
 
+# A function that init the game
 @tracer_off
 def init_game():
     global board, player_win_solution, computer_win_solution, current_color
+    # creating shortcuts for the keys
     wn.onkey(init_game_with_clear, "r")
     wn.onkey(init_game_with_clear, "R")
     wn.onkey(change_color_mode, "t")
@@ -92,6 +98,7 @@ def init_game():
     wn.onkey(on_quit, "q")
     wn.onkey(on_quit, "Q")
     wn.listen()
+    # init the instructions
     instructions_pen.goto(-200, 280)
     instructions_pen.write("Welcome to Gomoku Game", font=get_font(30))
     instructions_pen.goto(-200, 230)
@@ -103,12 +110,15 @@ def init_game():
     instructions_pen.write("Press R to restart", font=get_font())
     instructions_pen.goto(-200, 170)
     instructions_pen.write("Press T to be change color", font=get_font())
+    # init the variables
     board = [[None for j in range(lines)] for i in range(lines)]
     player_win_solution = {}
     computer_win_solution = {}
     current_color = "B"
     create_board()
+    # init the click event
     wn.onclick(on_click)
+    # if the computer is black, create a piece at the center
     if not is_player_black:
         board[7][7] = "B"
         create_piece(7, 7, "B")
@@ -116,6 +126,7 @@ def init_game():
         change_color()
 
 
+# a function that creates a piece
 @tracer_off
 def create_piece(index_x, index_y, color):
     x = index_x * box_size + offset_x
@@ -134,10 +145,12 @@ def create_piece(index_x, index_y, color):
     pen.penup()
 
 
+# a function that creates the board
 @tracer_off
 def create_board():
     pen.goto(offset_x, offset_y)
     pen.fillcolor(0.78, 0.67, 0.13)
+    # fill the board color
     pen.begin_fill()
     pen.pendown()
     pen.goto(offset_x, size * box_size + offset_y)
@@ -147,6 +160,7 @@ def create_board():
     pen.end_fill()
     pen.penup()
 
+    # draw the lines
     for i in range(lines):
         pen.goto(offset_x, i * box_size + offset_y)
         pen.pendown()
@@ -166,7 +180,7 @@ def is_out_of_bounds(x, y):
 def is_box_empty(x, y):
     return board[x][y] == None
 
-
+# a function that checks if the player or the computer wins
 def is_win(x, y, color):
     for i in range(solution_amount):
         if color == "B":
@@ -231,10 +245,12 @@ def on_computer():
     max_score = 0
     temp_i = 0
     temp_j = 0
-
+    # iterate through the board
     for i in range(lines):
         for j in range(lines):
+            # if the pos is empty
             if board[i][j] == None:
+                # iterate through all the solutions, find out the max score
                 for k in range(solution_amount):
                     if k in all_win_solution[i][j]:
                         if k in player_win_solution:
@@ -295,21 +311,21 @@ def after_win(who_win):
     end_pen.write("Press Q to quit", align="center", font=get_font())
 
 
-open_screen = trtl.Turtle(visible=False, shape="square")
-open_screen.shapesize(100, 100)
-open_screen.color("green")
-open_screen.penup()
-open_screen.write("Press Space to start", align="center", font=get_font())
-open_screen.goto(0, -50)
-open_screen.write("Press Q to quit", align="center", font=get_font())
+open_screen_pen = trtl.Turtle(visible=False, shape="square")
+open_screen_pen.shapesize(100, 100)
+open_screen_pen.color("green")
+open_screen_pen.penup()
+open_screen_pen.write("Press Space to start", align="center", font=get_font())
+open_screen_pen.goto(0, -50)
+open_screen_pen.write("Press Q to quit", align="center", font=get_font())
 
 
 def on_start():
-    open_screen.clear()
-    open_screen.color("white")
-    open_screen.showturtle()
+    open_screen_pen.clear()
+    open_screen_pen.color("white")
+    open_screen_pen.showturtle()
     init_game()
-    open_screen.goto(0, 2000)
+    open_screen_pen.goto(0, 2000)
     wn.onkey(None, "space")
 
 
