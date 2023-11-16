@@ -92,15 +92,17 @@ def init_game():
     wn.onkey(on_quit, "q")
     wn.onkey(on_quit, "Q")
     wn.listen()
+    instructions_pen.goto(-200, 280)
+    instructions_pen.write("Welcome to Gomoku Game", font=get_font(30))
     instructions_pen.goto(-200, 230)
     instructions_pen.write(
         "You are " + ("black side" if is_player_black else "white side"),
-        font=("Arial", 20, "normal"),
+        font=get_font(),
     )
     instructions_pen.goto(-200, 200)
-    instructions_pen.write("Press R to restart", font=("Arial", 20, "normal"))
+    instructions_pen.write("Press R to restart", font=get_font())
     instructions_pen.goto(-200, 170)
-    instructions_pen.write("Press T to be change color", font=("Arial", 20, "normal"))
+    instructions_pen.write("Press T to be change color", font=get_font())
     board = [[None for j in range(lines)] for i in range(lines)]
     player_win_solution = {}
     computer_win_solution = {}
