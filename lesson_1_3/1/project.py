@@ -57,22 +57,46 @@ for i in range(lines - 4):
         solution_amount += 1
 
 
+def get_font(size=20):
+    return ("Arial", size, "normal")
+
+
+def tracer_off(fn):
+    def wrapped(*args, **kwargs):
+        wn.tracer(False)
+        result = fn(*args, **kwargs)
+        wn.tracer(True)
+        return result
+
+    return wrapped
+
+
 def change_color_mode():
     global is_player_black
     is_player_black = not is_player_black
+    init_game_with_clear()
+
+
+def init_game_with_clear():
+    wn.clear()
     init_game()
 
 
+@tracer_off
 def init_game():
     global board, player_win_solution, computer_win_solution, current_color
-    wn.clear()
-    wn.onkey(init_game, "r")
-    wn.onkey(init_game, "R")
+    wn.onkey(init_game_with_clear, "r")
+    wn.onkey(init_game_with_clear, "R")
     wn.onkey(change_color_mode, "t")
     wn.onkey(change_color_mode, "T")
+    wn.onkey(on_quit, "q")
+    wn.onkey(on_quit, "Q")
     wn.listen()
     instructions_pen.goto(-200, 230)
-    instructions_pen.write("You are " + ("black side" if is_player_black else "white side"), font=("Arial", 20, "normal"))
+    instructions_pen.write(
+        "You are " + ("black side" if is_player_black else "white side"),
+        font=("Arial", 20, "normal"),
+    )
     instructions_pen.goto(-200, 200)
     instructions_pen.write("Press R to restart", font=("Arial", 20, "normal"))
     instructions_pen.goto(-200, 170)
@@ -88,16 +112,6 @@ def init_game():
         create_piece(7, 7, "B")
         is_win(7, 7, "B")
         change_color()
-
-
-def tracer_off(fn):
-    def wrapped(*args, **kwargs):
-        wn.tracer(False)
-        result = fn(*args, **kwargs)
-        wn.tracer(True)
-        return result
-
-    return wrapped
 
 
 @tracer_off
@@ -131,12 +145,12 @@ def create_board():
     pen.end_fill()
     pen.penup()
 
-    for i in range(size):
+    for i in range(lines):
         pen.goto(offset_x, i * box_size + offset_y)
         pen.pendown()
         pen.goto(size * box_size + offset_x, i * box_size + offset_y)
         pen.penup()
-    for i in range(size):
+    for i in range(lines):
         pen.goto(i * box_size + offset_x, offset_y)
         pen.pendown()
         pen.goto(i * box_size + offset_x, size * box_size + offset_y)
@@ -263,20 +277,46 @@ def on_computer():
         after_win("computer")
 
 
+@tracer_off
 def after_win(who_win):
     wn.onclick(None)
-    wn.clear()
-    wn.onkey(init_game, "r")
-    wn.onkey(init_game, "R")
     end_pen = trtl.Turtle()
     end_pen.hideturtle()
     end_pen.penup()
-    end_pen.goto(-200, 0)
-    end_pen.write(f"Game Over, {who_win} win", font=("Arial", 30, "normal"))
-    end_pen.goto(-100, -50)
-    end_pen.write("Press R to restart", font=("Arial", 20, "normal"))
+    end_pen.goto(0, -300)
+    end_pen.write(f"Game Over, {who_win} win", align="center", font=get_font(30))
+    end_pen.goto(0, -350)
+    end_pen.write("Press R to restart", align="center", font=get_font())
+    end_pen.goto(0, -400)
+    end_pen.write("Press T to be change color", align="center", font=get_font())
+    end_pen.goto(0, -450)
+    end_pen.write("Press Q to quit", align="center", font=get_font())
 
 
-init_game()
+open_screen = trtl.Turtle(visible=False, shape="square")
+open_screen.shapesize(100, 100)
+open_screen.color("green")
+open_screen.penup()
+open_screen.write("Press Space to start", align="center", font=get_font())
+open_screen.goto(0, -50)
+open_screen.write("Press Q to quit", align="center", font=get_font())
 
+
+def on_start():
+    open_screen.clear()
+    open_screen.color("white")
+    open_screen.showturtle()
+    init_game()
+    open_screen.goto(0, 2000)
+    wn.onkey(None, "space")
+
+
+def on_quit():
+    wn.bye()
+
+
+wn.onkey(on_start, "space")
+wn.onkey(on_quit, "q")
+wn.onkey(on_quit, "Q")
+wn.listen()
 wn.mainloop()
