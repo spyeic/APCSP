@@ -1,6 +1,6 @@
 #   A program creates a window on your screen using Tkinter.
 import tkinter as tk
-
+import tkinter.scrolledtext as tksc
 
 def test_my_button():
     frame_auth.tkraise()
@@ -33,12 +33,20 @@ lbl_pwd.pack()
 ent_pwd = tk.Entry(frame_login, bd=3, show="*")
 ent_pwd.pack(pady=5)
 
-btn_login = tk.Button(frame_login, text="Login", command=test_my_button)
+bt_image = tk.PhotoImage(file="button.gif")
+bt_image = bt_image.subsample(10,10)
+
+btn_login = tk.Button(frame_login, image=bt_image, text="Login", command=test_my_button)
 btn_login.pack()
 
 # TODO: Add a label to frame_auth
 lbl_show_password = tk.Label(frame_auth, text="nothing")
 lbl_show_password.pack()
+
+test_textbox = tksc.ScrolledText(frame_auth)
+test_textbox.configure(width=10, height=50)
+test_textbox.insert(tk.INSERT, "Hello World")
+test_textbox.pack()
 
 frame_login.tkraise()
 root.mainloop()
