@@ -9,6 +9,8 @@ import threading
 
 history = []
 is_running = False
+is_killed = False
+current_process = None
 
 ping_args = []
 ping_times = 5
@@ -48,6 +50,7 @@ def do_command_with_thread(command, args=None):
 
 
 def do_command(command, args=None):
+    global is_running
     url_val = get_url()
 
     command_textbox.delete(1.0, tk.END)
@@ -57,6 +60,8 @@ def do_command(command, args=None):
     args = [command] + (args or []) + [url_val]
     print("Running command: ", args)
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # v2
+    global current_process, is_killed
+    current_process = p
     while True:
         out = p.stdout.readline()
         if out == b"" and p.poll() is not None:
@@ -66,11 +71,15 @@ def do_command(command, args=None):
             command_textbox.see(tk.END)
             command_textbox.update()
     return_code = p.poll()
-    if return_code != 0:
+    if is_killed:
+        is_killed = False
+        print("Error: ", "{command} was killed")
+        command_textbox.insert(tk.END, f"\nprocess killed", "red")
+    elif return_code != 0:
         err = p.stderr.readlines()
         err_str = b"\n".join(err).decode("utf-8")
         print("Error: ", err_str)
-        command_textbox.insert(tk.END, f"an error occurred during {command}:\n{err_str}", "red")
+        command_textbox.insert(tk.END, f"an error occurred during {command}:\n{err_str} with return code {return_code}", "red")
     else:
         command_textbox.insert(tk.END, f"{command} finished", "green")
         command_textbox.see(tk.END)
@@ -79,8 +88,16 @@ def do_command(command, args=None):
         history.append(prev)
         print("Done")
 
-    global is_running
     is_running = False
+    current_process = None
+
+
+def kill():
+    global is_running, is_killed
+    if not is_running:
+        return
+    current_process.kill()
+    is_killed = True
 
 
 # Save function.
@@ -104,12 +121,14 @@ def save(content=None):
     file.write(content)
     file.close()
 
+bg_color = "cornsilk"
+font = ("Consolas", 12)
 
 root = tk.Tk()
 root.title("GUI")
-frame = tk.Frame(root)
+frame = tk.Frame(root, bg=bg_color)
 frame.grid(row=0, column=0)
-controls_frame = tk.Frame(frame)
+controls_frame = tk.Frame(frame, bg=bg_color)
 controls_frame.grid(row=0, column=0)
 
 
@@ -123,21 +142,22 @@ def create_url_entry():
         controls_frame,
         text="Enter a URL of interest: ",
         compound="center",
-        font=("comic sans", 14),
+        font=font,
         bd=0,
         relief=tk.FLAT,
         cursor="heart",
-        fg="red"
+        fg="red",
+        bg=bg_color
     )
     url_label.grid(row=0, column=0)
-    u_entry = tk.Entry(controls_frame, font=("comic sans", 14))  # change font
+    u_entry = tk.Entry(controls_frame, font=("", 14))  # change font
     u_entry.grid(row=1, column=0)
     return u_entry
 
 
 def create_command_textbox():
     # Adds an output box to GUI.
-    c_textbox = tksc.ScrolledText(frame)
+    c_textbox = tksc.ScrolledText(frame, font=font)
     c_textbox.tag_config("red", foreground="red")
     c_textbox.tag_config("green", foreground="green")
     c_textbox.grid(row=0, column=1)
@@ -168,6 +188,8 @@ save_and_history_frame = tk.Frame(controls_frame)
 save_and_history_frame.grid(row=5, column=0)
 save_btn = tk.Button(save_and_history_frame, text="Save", command=save)
 save_btn.grid(row=0, column=0)
+kill_btn = tk.Button(save_and_history_frame, text="Kill", command=kill)
+kill_btn.grid(row=0, column=2)
 
 command_textbox = create_command_textbox()
 history_frame, history_text = create_history_frame()
