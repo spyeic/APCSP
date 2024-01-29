@@ -6,33 +6,40 @@ import tkinter as tk
 import tkinter.scrolledtext as tksc
 from tkinter import filedialog
 from tkinter.filedialog import asksaveasfilename
-import os
-
+import sys
 
 history = []
+
+
+def get_url():
+    url_val = url_entry.get()
+    if len(url_val) == 0:
+        url_val = "127.0.0.1"
+    return url_val
+
+
 # Modify the do_command function:
 #   to use the new button as needed
 def do_command(command, args=None):
     global command_textbox, url_entry
-    
+    url_val = get_url()
+
     command_textbox.delete(1.0, tk.END)
-    command_textbox.insert(tk.END, command + " working....\n")
+    command_textbox.insert(tk.END, f"{command} working for url {url_val}\n\n")
     command_textbox.update()
-    url_val = url_entry.get()
-    if len(url_val) == 0:
-        url_val = "127.0.0.1"
+
     args = [command, url_val] + (args or [])
-    
+    print("Running command: ", args)
+
     p = subprocess.Popen(
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )  # v2
     while True:
         out = p.stdout.readline()
-        print(out)
         if out == b"" and p.poll() is not None:
             break
         if out != b"":
-            command_textbox.insert(tk.END, out)
+            command_textbox.insert(tk.END, out.decode("utf-8"))
             command_textbox.see(tk.END)
             command_textbox.update()
 
@@ -45,7 +52,7 @@ def do_command(command, args=None):
 
 
 # Save function.
-def mSave():
+def save(content=None):
     filename = asksaveasfilename(
         defaultextension=".txt",
         filetypes=(
@@ -57,9 +64,10 @@ def mSave():
     if filename is None:
         return
     file = open(filename, mode="w")
-    text_to_save = command_textbox.get("1.0", tk.END)
+    if not content:
+        content = command_textbox.get("1.0", tk.END)
 
-    file.write(text_to_save)
+    file.write(content)
     file.close()
 
 
@@ -67,8 +75,22 @@ root = tk.Tk()
 frame = tk.Frame(root)
 frame.pack()
 
+# if it is windows
+ping_args = []
+ping_times = 5
+if sys.platform.startswith("win"):
+    root.title("Windows")
+    ping_args.append("-n")
+elif sys.platform.startswith("darwin"):
+    root.title("Mac")
+    ping_args.append("-c")
+else:
+    root.title("Linux")
+    ping_args.append("-c")
+ping_args.append(str(ping_times))
 # set up button to run the do_command function
-ping_btn = tk.Button(frame, text="Check to see if a URL is up and active", command=lambda: do_command("ping", ["-t", "10"]))
+ping_btn = tk.Button(frame, text="Check to see if a URL is up and active",
+                     command=lambda: do_command("ping", ping_args))
 ping_btn.pack()
 
 nslookup_btn = tk.Button(frame, text="nslookup", command=lambda: do_command("nslookup"))
@@ -94,16 +116,24 @@ url_entry = tk.Entry(frame_URL, font=("comic sans", 14))  # change font
 url_entry.pack(side=tk.LEFT)
 
 # Adds an output box to GUI.
-command_textbox = tksc.ScrolledText(frame, height=10, width=100)
+command_textbox = tksc.ScrolledText(frame)
 command_textbox.pack()
 
-save_btn = tk.Button(frame, text="Save", command=mSave)
+save_btn = tk.Button(frame, text="Save", command=save)
 save_btn.pack()
 
 history_frame = tk.Frame(root)
 
-history_text = tksc.ScrolledText(history_frame, height=10, width=100)
+history_text = tksc.ScrolledText(history_frame)
 history_text.pack()
+
+history_save_btn = tk.Button(history_frame, text="Save", command=lambda: save("====================\n".join(history)))
+history_save_btn.pack()
+
+def show_main():
+    history_frame.pack_forget()
+    frame.pack()
+
 
 def show_history():
     frame.pack_forget()
@@ -111,8 +141,11 @@ def show_history():
     history_text.delete(1.0, tk.END)
     for item in history:
         history_text.insert(tk.END, item)
-        history_text.insert(tk.END, "\n\n")
-    
+        history_text.insert(tk.END, "====================\n\n")
+
+
+back_btn = tk.Button(history_frame, text="Back", command=lambda: show_main())
+back_btn.pack()
 
 history_btn = tk.Button(frame, text="History", command=show_history)
 history_btn.pack()
