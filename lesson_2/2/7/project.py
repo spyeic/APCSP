@@ -10,6 +10,18 @@ import sys
 
 history = []
 
+ping_args = []
+ping_times = 5
+tracert_cmd = "traceroute"
+tracert_args = []
+if sys.platform.startswith("win"):
+    ping_args.append("-n")
+    tracert_cmd = "tracert"
+else:
+    ping_args.append("-c")
+    tracert_args.append("-I")
+ping_args.append(str(ping_times))
+
 
 def get_url():
     url_val = url_entry.get()
@@ -26,7 +38,7 @@ def do_command(command, args=None):
     command_textbox.insert(tk.END, f"{command} working for url {url_val}\n\n")
     command_textbox.update()
 
-    args = [command, url_val] + (args or [])
+    args = [command, url_val] + (args or []) 
     print("Running command: ", args)
 
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # v2
@@ -38,10 +50,18 @@ def do_command(command, args=None):
             command_textbox.insert(tk.END, out.decode("utf-8"))
             command_textbox.see(tk.END)
             command_textbox.update()
-
-    prev = command_textbox.get("1.0", tk.END)
-    history.append(prev)
-    print("Done")
+    err = p.stderr.readlines()
+    if err:
+        err_str = b"\n".join(err).decode("utf-8")
+        print("Error: ", err_str)
+        command_textbox.insert(tk.END, f"an error occured during {command}:\n{err_str}", "red")
+    else:
+        command_textbox.insert(tk.END, f"{command} finished", "green")
+        command_textbox.see(tk.END)
+        command_textbox.update()
+        prev = command_textbox.get("1.0", tk.END)
+        history.append(prev)
+        print("Done")
 
 
 # Save function.
@@ -65,22 +85,9 @@ def save(content=None):
 
 
 root = tk.Tk()
+root.title("GUI")
 frame = tk.Frame(root)
 frame.pack()
-
-# if it is windows
-ping_args = []
-ping_times = 5
-if sys.platform.startswith("win"):
-    root.title("Windows")
-    ping_args.append("-n")
-elif sys.platform.startswith("darwin"):
-    root.title("Mac")
-    ping_args.append("-c")
-else:
-    root.title("Linux")
-    ping_args.append("-c")
-ping_args.append(str(ping_times))
 
 
 def create_function_button(text, command, args=None):
@@ -102,7 +109,7 @@ def create_url_entry():
         bd=0,
         relief=tk.FLAT,
         cursor="heart",
-        fg="mediumpurple3",
+        fg="red"
     )
     url_label.pack(side=tk.LEFT)
     global url_entry
@@ -115,6 +122,8 @@ def create_command_textbox():
     global command_textbox
     # Adds an output box to GUI.
     command_textbox = tksc.ScrolledText(frame)
+    command_textbox.tag_config("red", foreground="red")
+    command_textbox.tag_config("green", foreground="green")
     command_textbox.pack()
     save_btn = tk.Button(frame, text="Save", command=save)
     save_btn.pack()
@@ -137,7 +146,7 @@ def create_history_frame():
 create_url_entry()
 create_function_button("Check to see if a URL is up and active", "ping", ping_args)
 create_function_button("Get the IP address of a URL", "nslookup")
-create_function_button("Get the path of a URL", "traceroute")
+create_function_button("Get the path of a URL", tracert_cmd, tracert_args)
 # Adds an output box to GUI.
 create_command_textbox()
 create_history_frame()
