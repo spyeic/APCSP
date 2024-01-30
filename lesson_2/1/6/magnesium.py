@@ -12,7 +12,7 @@ def monitor():
         num_levels = len(mag_levels)
         if (current < mag_levels[0]):
             mesg = "Magnesium level too low!"
-        elif (current > mag_levels[num_levels]):
+        elif (current > mag_levels[num_levels - 1]):
             mesg = "Magnesium level too high!"
 
     except:
@@ -23,4 +23,4 @@ def monitor():
 
 # Function to simulate actual fish tank monitoring
 def get_magnesium_level():
-    return 1300
+    return 1200

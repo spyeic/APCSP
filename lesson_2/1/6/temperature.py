@@ -7,7 +7,7 @@ def monitor():
 
         # get multiple temperature readings
         temp_readings = get_temps()
-        num_readings = 0
+        num_readings = len(temp_readings)
 
         # sum adds up all items in list
         ave_temp = sum(temp_readings)
@@ -26,4 +26,4 @@ def monitor():
 
 # Function to simulate actual fish tank monitoring
 def get_temps():
-    return [65, 55, 70]
+    return [80, 82, 84, 86, 88, 90]

@@ -4,7 +4,7 @@ def monitor():
         val1 = 17
         val2 = 12
 
-        alkilines = list(range(val1, val2 + 1))
+        alkilines = list(range(val2, val1 + 1))
 
         current = get_alkalinity()
         mesg = "Alkalinity OK"
@@ -22,4 +22,4 @@ def monitor():
 
 # Function to simulate actual fish tank monitoring
 def get_alkalinity():
-    return 9
+    return 15
