@@ -128,7 +128,7 @@ bg_color = "cornsilk"
 font = ("Consolas", 12)
 
 root = tk.Tk()
-root.title("GUI")
+root.title("IP Tools")
 frame = tk.Frame(root, bg=bg_color, bd=10, relief=tk.RIDGE)
 frame.grid(row=0, column=0)
 controls_frame = tk.Frame(frame, bg=bg_color, pady=5, padx=5)
