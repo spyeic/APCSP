@@ -1,5 +1,7 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageTk
 import math
+import tkinter as tk
+from tkinter import filedialog, scrolledtext
 
 
 def offset_array(arr, offset):
@@ -92,6 +94,7 @@ def encode(msg, img_path="encoded.png", block_size=20, encode_offset=4, is_ascii
             pos += 1
             index += 1
     im.save(img_path)
+    return im
 
 
 def decode(img_path="encoded.png"):
@@ -109,7 +112,7 @@ def decode(img_path="encoded.png"):
                 continue
             pixel = img.getpixel((x * block_size, y * block_size))
             if pixel[0] == 0 and pixel[1] == 0 and pixel[2] == 0:
-                return msg
+                return msg, img
 
             decoded_array = offset_array(pixel, -encode_offset)
             if is_ascii_only:
@@ -122,8 +125,72 @@ def decode(img_path="encoded.png"):
                 msg += chr(int(binary_string, 2))
 
 
-message = "おはようございます"
-encode(message, block_size=200, encode_offset=10, is_ascii_only=False)
-result = decode()
-print(result)
+root = tk.Tk()
+root.title("Image Encoder")
 
+encode_frame = tk.Frame(root)
+encode_frame.grid(row=0, column=0)
+
+label = tk.Label(encode_frame, text="Enter the message to encode")
+label.pack()
+
+entry = tk.Entry(encode_frame)
+entry.pack()
+
+encode_image_label = tk.Label(encode_frame)
+
+encode_image = None
+
+
+def encode_message():
+    msg = entry.get()
+    im = encode(msg, encode_offset=10, is_ascii_only=False)
+    im = im.resize((200, 200))
+    global encode_image
+    encode_image = ImageTk.PhotoImage(im)
+    encode_image_label.configure(image=encode_image)
+
+
+button = tk.Button(encode_frame, text="Encode", command=encode_message)
+button.pack()
+encode_image_label.pack()
+
+decode_frame = tk.Frame(root)
+decode_frame.grid(row=0, column=1)
+
+decoded_textbox = scrolledtext.ScrolledText(decode_frame, wrap=tk.WORD)
+decode_image_label = tk.Label(decode_frame)
+
+decode_image = None
+
+
+def decode_message():
+    filename = filedialog.askopenfilename(
+        initialdir="./",
+        title="Select an image to decode", filetypes=[
+            ("Image files", "*.png"),
+            ("Image files", "*.jpg"),
+            ("All files", "*.*")
+        ]
+    )
+    if not filename:
+        return
+    result, img = decode(filename)
+    img = img.resize((200, 200))
+    global decode_image
+    decode_image = ImageTk.PhotoImage(img)
+    decode_image_label.configure(image=decode_image)
+    decoded_textbox.delete("1.0", tk.END)
+    decoded_textbox.insert(tk.INSERT, result)
+    decoded_textbox.see(tk.END)
+    decoded_textbox.update()
+
+
+decode_label = tk.Label(decode_frame, text="Select an image to decode")
+decode_label.pack()
+decode_button = tk.Button(decode_frame, text="Decode", command=decode_message)
+decode_button.pack()
+decode_image_label.pack()
+decoded_textbox.pack()
+
+root.mainloop()
