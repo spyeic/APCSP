@@ -1,7 +1,6 @@
-from PIL import Image, ImageDraw, ImageTk
+import pip
+from PIL import Image, ImageDraw
 import math
-import tkinter as tk
-from tkinter import filedialog, scrolledtext
 
 
 def offset_array(arr, offset):
@@ -16,11 +15,10 @@ def offset_array(arr, offset):
     return tuple(arr)
 
 
-def encode(msg, img_path="encoded.png", block_size=20, encode_offset=4, is_ascii_only=True):
+def encode(msg, block_size=20, encode_offset=4, is_ascii_only=True):
     """
     Encode a message into an image
     :param msg: The message to encode
-    :param img_path: The path to the image to encode the message into
     :param block_size: The size of the color blocks to use
     :param encode_offset: The offset to use when encoding the message
     :param is_ascii_only: Whether to only allow ASCII characters
@@ -93,12 +91,10 @@ def encode(msg, img_path="encoded.png", block_size=20, encode_offset=4, is_ascii
             draw_block(pos % size[0], pos // size[0], tuple(temp))
             pos += 1
             index += 1
-    im.save(img_path)
     return im
 
 
-def decode(img_path="encoded.png"):
-    img = Image.open(img_path)
+def decode(img):
     width, height = img.size
     msg = ""
     first_pixel = img.getpixel((0, 0))
@@ -112,7 +108,7 @@ def decode(img_path="encoded.png"):
                 continue
             pixel = img.getpixel((x * block_size, y * block_size))
             if pixel[0] == 0 and pixel[1] == 0 and pixel[2] == 0:
-                return msg, img
+                return msg
 
             decoded_array = offset_array(pixel, -encode_offset)
             if is_ascii_only:
@@ -125,47 +121,65 @@ def decode(img_path="encoded.png"):
                 msg += chr(int(binary_string, 2))
 
 
-root = tk.Tk()
-root.title("Image Encoder")
+try:
+    import customtkinter as ctk
 
-encode_frame = tk.Frame(root)
-encode_frame.grid(row=0, column=0)
+    print("Found installed package.")
+except ModuleNotFoundError:
+    print("Module not found, installing...")
+    pip.main(["install", "ctk"])
+    import customtkinter as ctk
 
-label = tk.Label(encode_frame, text="Enter the message to encode")
-label.pack()
+ctk.set_appearance_mode("system")  # Modes: "System" (standard), "Dark", "Light"
+ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
-entry = tk.Entry(encode_frame)
-entry.pack()
-
-encode_image_label = tk.Label(encode_frame)
-
-encode_image = None
-
-
-def encode_message():
-    msg = entry.get()
-    im = encode(msg, encode_offset=10, is_ascii_only=False)
-    im = im.resize((200, 200))
-    global encode_image
-    encode_image = ImageTk.PhotoImage(im)
-    encode_image_label.configure(image=encode_image)
+app = ctk.CTk()
+app.geometry("600x400")
+app.title("Image Encoder")
 
 
-button = tk.Button(encode_frame, text="Encode", command=encode_message)
-button.pack()
-encode_image_label.pack()
-
-decode_frame = tk.Frame(root)
-decode_frame.grid(row=0, column=1)
-
-decoded_textbox = scrolledtext.ScrolledText(decode_frame, wrap=tk.WORD)
-decode_image_label = tk.Label(decode_frame)
-
-decode_image = None
+raw_image = None
+image = None
 
 
-def decode_message():
-    filename = filedialog.askopenfilename(
+def action(name):
+    global image, raw_image
+    if name == "encode":
+        text = textbox.get("1.0", "end-1c")
+        if not text:
+            return
+        print(text)
+        raw_image = encode(text)
+        image = ctk.CTkImage(raw_image, size=(200, 200))
+        image_label.configure(image=image)
+    else:
+        if not raw_image:
+            return
+        msg = decode(raw_image)
+        textbox.delete("1.0", "end")
+        textbox.insert("1.0", msg)
+        textbox.update()
+
+
+def change_mode(name):
+    action_button.configure(text=name)
+    textbox.grid_forget()
+    action_button.grid_forget()
+    select_image_button.grid_forget()
+    image_label.grid_forget()
+    if name == "Encode":
+        action_button.grid(row=0, column=0, padx=10, pady=10)
+        textbox.grid(row=1, column=0, padx=10, pady=10)
+        image_label.grid(row=1, column=1, padx=10, pady=10)
+    else:
+        select_image_button.grid(row=0, column=0, padx=10, pady=10)
+        image_label.grid(row=1, column=0, padx=10, pady=10)
+        action_button.grid(row=0, column=1, padx=10, pady=10)
+        textbox.grid(row=1, column=1, padx=10, pady=10)
+
+
+def select_image():
+    filename = ctk.filedialog.askopenfilename(
         initialdir="./",
         title="Select an image to decode", filetypes=[
             ("Image files", "*.png"),
@@ -175,22 +189,52 @@ def decode_message():
     )
     if not filename:
         return
-    result, img = decode(filename)
-    img = img.resize((200, 200))
-    global decode_image
-    decode_image = ImageTk.PhotoImage(img)
-    decode_image_label.configure(image=decode_image)
-    decoded_textbox.delete("1.0", tk.END)
-    decoded_textbox.insert(tk.INSERT, result)
-    decoded_textbox.see(tk.END)
-    decoded_textbox.update()
+    global image, raw_image
+    raw_image = Image.open(filename)
+    image = ctk.CTkImage(raw_image, size=(200, 200))
+    image_label.configure(image=image)
 
 
-decode_label = tk.Label(decode_frame, text="Select an image to decode")
-decode_label.pack()
-decode_button = tk.Button(decode_frame, text="Decode", command=decode_message)
-decode_button.pack()
-decode_image_label.pack()
-decoded_textbox.pack()
+selection_frame = ctk.CTkFrame(master=app)
+selection_frame.pack(pady=10, padx=60, fill="both", expand=True)
 
-root.mainloop()
+selection_title_label = ctk.CTkLabel(master=selection_frame, text="Select a mode:")
+selection_title_label.pack(side="top")
+
+content_frame = ctk.CTkFrame(master=app)
+content_frame.pack(pady=10, padx=60, fill="both", expand=True)
+
+
+radiobutton_var = ctk.StringVar(value="encode")
+textbox = ctk.CTkTextbox(master=content_frame)
+
+action_button = ctk.CTkButton(
+    master=content_frame,
+    text="Encode",
+    command=lambda: action(radiobutton_var.get()),
+)
+
+radiobutton_1 = ctk.CTkRadioButton(
+    master=selection_frame,
+    text="Encode",
+    variable=radiobutton_var,
+    value="encode",
+    command=lambda: change_mode("Encode")
+)
+
+radiobutton_2 = ctk.CTkRadioButton(
+    master=selection_frame,
+    text="Decode",
+    variable=radiobutton_var,
+    value="decode",
+    command=lambda: change_mode("Decode")
+)
+
+select_image_button = ctk.CTkButton(master=content_frame, text="Select an image", command=select_image)
+image_label = ctk.CTkLabel(master=content_frame, image=image, text="", width=200, height=200)
+
+radiobutton_1.pack(side="left", padx=10)
+radiobutton_2.pack(side="right", padx=10)
+change_mode("Encode")
+
+app.mainloop()
