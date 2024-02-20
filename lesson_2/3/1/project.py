@@ -127,7 +127,7 @@ try:
     print("Found installed package.")
 except ModuleNotFoundError:
     print("Module not found, installing...")
-    pip.main(["install", "ctk"])
+    pip.main(["install", "customtkinter"])
     import customtkinter as ctk
 
 ctk.set_appearance_mode("system")  # Modes: "System" (standard), "Dark", "Light"
