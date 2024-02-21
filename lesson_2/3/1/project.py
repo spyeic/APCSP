@@ -1,4 +1,5 @@
-import pip
+import subprocess
+import sys
 from tkinter import messagebox
 from PIL import Image, ImageDraw, ImageTk
 import math
@@ -129,7 +130,7 @@ try:
     print("Found installed package.")
 except ModuleNotFoundError:
     print("Module not found, installing...")
-    pip.main(["install", "customtkinter"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "customtkinter"])
     import customtkinter as ctk
 
 ctk.set_appearance_mode("system")
