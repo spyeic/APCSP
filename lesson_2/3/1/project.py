@@ -1,6 +1,8 @@
 import pip
-from PIL import Image, ImageDraw
+from tkinter import messagebox
+from PIL import Image, ImageDraw, ImageTk
 import math
+import random
 
 
 def offset_array(arr, offset):
@@ -15,7 +17,7 @@ def offset_array(arr, offset):
     return tuple(arr)
 
 
-def encode(msg, block_size=20, encode_offset=4, is_ascii_only=True):
+def encode(msg, block_size=20, encode_offset=0, is_ascii_only=False):
     """
     Encode a message into an image
     :param msg: The message to encode
@@ -30,7 +32,7 @@ def encode(msg, block_size=20, encode_offset=4, is_ascii_only=True):
     if block_size > 255 or block_size < 0:
         raise ValueError("block_size should be between 0 and 255")
 
-    if encode_offset % 8 == 0 or encode_offset < 0 or encode_offset > 24:
+    if encode_offset < 0 or encode_offset > 24:
         raise ValueError("encode_offset should be between 0 and 24 and not a multiple of 8")
 
     if is_ascii_only:
@@ -130,16 +132,15 @@ except ModuleNotFoundError:
     pip.main(["install", "customtkinter"])
     import customtkinter as ctk
 
-ctk.set_appearance_mode("system")  # Modes: "System" (standard), "Dark", "Light"
-ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
+ctk.set_appearance_mode("system")
+ctk.set_default_color_theme("blue")
 
 app = ctk.CTk()
-app.geometry("600x400")
-app.title("Image Encoder")
+app.geometry("560x530")
 
-
-raw_image = None
-image = None
+raw_image = Image.new("RGB", (200, 200), "white")
+image = ctk.CTkImage(raw_image, size=(200, 200))
+app.after(300, lambda: app.iconphoto(False, ImageTk.PhotoImage(raw_image)))
 
 
 def action(name):
@@ -148,14 +149,28 @@ def action(name):
         text = textbox.get("1.0", "end-1c")
         if not text:
             return
-        print(text)
-        raw_image = encode(text)
+        try:
+            block_size = int(image_size_entry.get())
+            if block_size < 0 or block_size > 255:
+                messagebox.showerror("Error", "Invalid block size")
+                return
+            ascii_only = True if ascii_only_checkbox.get() == 1 else False
+            print(ascii_only)
+        except ValueError:
+            messagebox.showerror("Error", "Invalid input")
+            return
+        offset = random.randint(0, 24)
+        raw_image = encode(text, block_size, offset, ascii_only)
         image = ctk.CTkImage(raw_image, size=(200, 200))
         image_label.configure(image=image)
+        app.iconphoto(False, ImageTk.PhotoImage(raw_image))
     else:
         if not raw_image:
             return
         msg = decode(raw_image)
+        if not msg:
+            messagebox.showerror("Error", "No message found in the image")
+            return
         textbox.delete("1.0", "end")
         textbox.insert("1.0", msg)
         textbox.update()
@@ -163,19 +178,37 @@ def action(name):
 
 def change_mode(name):
     action_button.configure(text=name)
+    textbox.delete("1.0", "end")
+    global image, raw_image
+    raw_image = Image.new("RGB", (200, 200), "white")
+    image = ctk.CTkImage(raw_image, size=(200, 200))
+    image_label.configure(image=image)
     textbox.grid_forget()
+    action_label.grid_forget()
     action_button.grid_forget()
+    save_image_button.grid_forget()
     select_image_button.grid_forget()
     image_label.grid_forget()
     if name == "Encode":
-        action_button.grid(row=0, column=0, padx=10, pady=10)
+        app.title("Image Encoder")
+        content_frame.pack_forget()
+        encode_option_frame.pack(pady=10, padx=60, fill="both", expand=True)
+        content_frame.pack(pady=10, padx=60, fill="both", expand=True)
+        action_label.configure(text="Enter the message to encode:")
+        action_label.grid(row=0, column=0)
         textbox.grid(row=1, column=0, padx=10, pady=10)
         image_label.grid(row=1, column=1, padx=10, pady=10)
+        action_button.grid(row=2, column=0, padx=10, pady=10)
+        save_image_button.grid(row=2, column=1, padx=10, pady=10)
     else:
-        select_image_button.grid(row=0, column=0, padx=10, pady=10)
+        app.title("Image Decoder")
+        encode_option_frame.pack_forget()
+        action_label.configure(text="Select an image to decode:")
+        action_label.grid(row=0, column=0)
         image_label.grid(row=1, column=0, padx=10, pady=10)
-        action_button.grid(row=0, column=1, padx=10, pady=10)
         textbox.grid(row=1, column=1, padx=10, pady=10)
+        select_image_button.grid(row=2, column=0, padx=10, pady=10)
+        action_button.grid(row=2, column=1, padx=10, pady=10)
 
 
 def select_image():
@@ -195,14 +228,45 @@ def select_image():
     image_label.configure(image=image)
 
 
+def save_image():
+    filename = ctk.filedialog.asksaveasfilename(
+        initialdir="./",
+        initialfile="output.png",
+        title="Save the image",
+        defaultextension=".png",
+        filetypes=[
+            ("PNG files", "*.png"),
+            ("JPG files", "*.jpg")
+        ]
+    )
+    print(filename)
+    if not filename:
+        return
+    raw_image.save(filename)
+
+
 selection_frame = ctk.CTkFrame(master=app)
 selection_frame.pack(pady=10, padx=60, fill="both", expand=True)
 
 selection_title_label = ctk.CTkLabel(master=selection_frame, text="Select a mode:")
 selection_title_label.pack(side="top")
 
+encode_option_frame = ctk.CTkFrame(master=app, height=100)
+
+image_size_label = ctk.CTkLabel(master=encode_option_frame, text="Image size per small block: (0-255)")
+image_size_label.grid(row=0, column=0, padx=10, pady=10)
+image_size_entry = ctk.CTkEntry(master=encode_option_frame, placeholder_text="Image size")
+image_size_entry.insert(0, "20")
+image_size_entry.grid(row=0, column=1, padx=10, pady=10)
+ascii_label = ctk.CTkLabel(master=encode_option_frame, text="Is English only? (True/False)")
+ascii_label.grid(row=1, column=0, padx=10, pady=10)
+ascii_only_checkbox = ctk.CTkCheckBox(
+    master=encode_option_frame,
+    text=""
+)
+ascii_only_checkbox.grid(row=1, column=1, padx=10, pady=10)
+
 content_frame = ctk.CTkFrame(master=app)
-content_frame.pack(pady=10, padx=60, fill="both", expand=True)
 
 
 radiobutton_var = ctk.StringVar(value="encode")
@@ -230,11 +294,13 @@ radiobutton_2 = ctk.CTkRadioButton(
     command=lambda: change_mode("Decode")
 )
 
+action_label = ctk.CTkLabel(master=content_frame)
 select_image_button = ctk.CTkButton(master=content_frame, text="Select an image", command=select_image)
 image_label = ctk.CTkLabel(master=content_frame, image=image, text="", width=200, height=200)
+save_image_button = ctk.CTkButton(master=content_frame, text="Save image", command=save_image)
 
-radiobutton_1.pack(side="left", padx=10)
-radiobutton_2.pack(side="right", padx=10)
+radiobutton_1.pack(side="left", padx=10, pady=10)
+radiobutton_2.pack(side="right", padx=10, pady=10)
 change_mode("Encode")
 
 app.mainloop()
